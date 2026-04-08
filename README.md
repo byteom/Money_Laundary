@@ -1,118 +1,241 @@
-# Advanced Money Laundering Detection Using Temporal Graph Networks
+# Advanced AML Detection with Temporal Graph Networks
 
-This project implements a **state-of-the-art** anti-money-laundering (AML) detection system using temporal graph neural networks with advanced feature engineering and ensemble learning.
+An end-to-end Anti-Money Laundering (AML) detection system that combines:
+- Baseline ML models (Logistic Regression, Random Forest)
+- Graph neural networks (Temporal GraphSAGE)
+- A Temporal Graph Network (TGN) with memory and time encoding
+- A learned weighted ensemble for final fraud risk scoring
 
-## 🌟 Key Features
+The project includes data generation, preprocessing, model training, evaluation, tests, and a Flask API + web UI for inference.
 
-### Advanced Model Architecture
-- **Temporal Graph Network (TGN)**: Full implementation with memory modules, temporal attention, and Time2Vec encoding
-- **GraphSAGE**: Message-passing neural network for graph-based learning
-- **Ensemble Model**: Learned weight combination with probability calibration
+## Table of Contents
 
-### AML-Specific Feature Engineering
-- **Structuring Detection**: Near-threshold amounts, round number frequency
-- **Velocity Analysis**: Transaction rate, burst detection, dormancy patterns
-- **Graph Metrics**: PageRank, cycle participation, flow imbalance
-- **Temporal Windows**: Rolling 1h/6h/24h aggregations
+1. [What This Project Solves](#what-this-project-solves)
+2. [Repository Layout](#repository-layout)
+3. [Tech Stack](#tech-stack)
+4. [Quick Start](#quick-start)
+5. [Detailed Setup](#detailed-setup)
+6. [Data Pipeline](#data-pipeline)
+7. [Training Pipeline](#training-pipeline)
+8. [Run the API](#run-the-api)
+9. [API Reference](#api-reference)
+10. [Model Performance](#model-performance)
+11. [Testing](#testing)
+12. [Artifacts Generated](#artifacts-generated)
+13. [Deployment Notes](#deployment-notes)
+14. [Troubleshooting](#troubleshooting)
+15. [Limitations and Assumptions](#limitations-and-assumptions)
 
-### Production-Ready Deployment
-- Flask API with multiple model predictions
-- Risk classification (critical/high/medium/low/minimal)
-- Model explainability through attention weights
+## What This Project Solves
 
-## Project Structure
+Traditional AML systems often miss complex behavior because they do not model:
+- Account-to-account relationships as a graph
+- Temporal dynamics (rapid chains, bursty activity, dormancy)
+- Structuring patterns (transactions near reporting thresholds)
+
+This project addresses those gaps by combining engineered AML features with temporal graph learning.
+
+## Repository Layout
 
 ```text
-data/               Dataset generation
-preprocessing/      Cleaning, encoding, scaling, advanced feature engineering
-graph/              Temporal graph helpers
-models/
-  ├── baseline.py   Logistic Regression & Random Forest
-  ├── gnn.py        Temporal GraphSAGE
-  ├── tgn.py        Temporal Graph Network (TGN)
-  └── ensemble.py   Weighted ensemble with calibration
-training/           Training and evaluation pipeline
-deployment/         Flask API for inference
-tests/              Unit and integration tests
-artifacts/          Processed data, trained models, and reports
+Money_Laundary/
+  data/
+    generate_synthetic_data.py      # Synthetic transaction generator
+    synthetic_aml_transactions.csv  # Default dataset
+  preprocessing/
+    preprocess.py                    # Feature engineering + graph prep
+  graph/
+    temporal_graph.py                # Graph batch utilities
+  models/
+    baseline.py                      # Logistic Regression + Random Forest
+    gnn.py                           # Temporal GraphSAGE model and training
+    tgn.py                           # Temporal Graph Network model and training
+    ensemble.py                      # Learned weighted ensemble + calibration
+  training/
+    train.py                         # End-to-end training pipeline
+  deployment/
+    app.py                           # Flask API
+    static/index.html                # Web UI
+  tests/
+    test_tgn.py
+    test_integration.py
+  artifacts/
+    models/                          # Saved models and weights
+    processed/                       # Processed data and preprocessors
+    reports/                         # Evaluation reports
 ```
 
-## Model Architecture
+## Tech Stack
 
-### Temporal Graph Network (TGN)
-```
-Input → Time2Vec Encoding → Memory Lookup → Temporal Attention → Message Aggregation → Memory Update → Edge Classification
-```
+- Python, Pandas, NumPy
+- Scikit-learn
+- PyTorch
+- Flask + Flask-CORS
+- Pytest
 
-**Components:**
-- **Time2Vec**: Learnable time encoding capturing periodic and linear patterns
-- **Memory Module**: GRU-based state tracking for each node
-- **Temporal Attention**: Multi-head attention with time decay weighting
-- **Focal Loss**: Better handling of class imbalance
+See [requirements.txt](requirements.txt) for exact dependencies.
 
-### Advanced Features
+## Quick Start
 
-| Category | Features |
-|----------|----------|
-| Graph Structure | PageRank, cycle participation, flow imbalance |
-| Velocity | Transaction rate/hour, burst score, dormancy ratio |
-| Structuring | Near-threshold ratio, round number frequency |
-| Temporal | 1h/6h/24h max counts, volumes, counterparties |
-
-## Setup
+From the project root:
 
 ```bash
-# Install dependencies
+python -m venv .venv
+```
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-
-# Run tests
-python -m pytest tests/ -v
 ```
 
-## Train All Models
+Train all models (uses `data/synthetic_aml_transactions.csv` by default):
 
 ```bash
-# Full training (baseline + GraphSAGE + TGN + ensemble)
-python -m training.train --generate
-
-# Quick training (skip TGN for faster iteration)
-python -m training.train --generate --skip-tgn
+python -m training.train
 ```
 
-**Training Output:**
-- Baseline models (Logistic Regression, Random Forest)
-- Temporal GraphSAGE
-- Temporal Graph Network (TGN)
-- Ensemble with learned weights
-- Model comparison report
-
-## Run the API
+Start API server:
 
 ```bash
 python -m deployment.app
 ```
 
-**Endpoints:**
-- `GET /` - Web UI
-- `GET /health` - Health check
-- `POST /predict` - Fraud prediction
-- `GET /model-info` - Model information
+Open:
+- `http://127.0.0.1:5000/` for the web UI
+- `http://127.0.0.1:5000/health` for health check
 
-## Example Request
+## Detailed Setup
+
+### Prerequisites
+
+- Python 3.8+
+- 8 GB RAM minimum (16 GB recommended for larger experiments)
+- Optional: virtual environment tool (`venv`)
+
+### Install
 
 ```bash
-curl -X POST http://127.0.0.1:5000/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sender_id": "ACC_0001",
-    "receiver_id": "ACC_0002",
-    "transaction_amount": 9500,
-    "timestamp": "2025-03-12T10:15:00",
-    "transaction_type": "transfer"
-  }'
+python -m pip install -r requirements.txt
 ```
 
-**Response:**
+### Verify Installation
+
+```bash
+python -c "import torch, sklearn, flask, pandas; print('ok')"
+```
+
+## Data Pipeline
+
+### 1. Generate synthetic data (optional)
+
+If you want to regenerate the dataset:
+
+```bash
+python data/generate_synthetic_data.py
+```
+
+This creates/overwrites:
+- `data/synthetic_aml_transactions.csv`
+
+### 2. Preprocessing and feature engineering
+
+You can run preprocessing directly:
+
+```bash
+python -c "from preprocessing.preprocess import prepare_dataset; from pathlib import Path; prepare_dataset(Path('data/synthetic_aml_transactions.csv'), Path('artifacts/processed'))"
+```
+
+In normal use, preprocessing is run automatically inside `training/train.py`.
+
+### Engineered features include
+
+- Graph structure: PageRank, cycle participation, flow imbalance
+- Velocity: transaction rate, burst score, dormancy ratio
+- Structuring signals: near-threshold ratio, round-number behavior
+- Temporal windows: rolling 1h/6h/24h activity stats
+
+## Training Pipeline
+
+Run full training:
+
+```bash
+python -m training.train
+```
+
+Useful flags:
+
+```bash
+python -m training.train --skip-tgn
+python -m training.train --dataset data/synthetic_aml_transactions.csv --artifacts artifacts
+```
+
+What training does:
+
+1. Loads and preprocesses data
+2. Trains baseline models
+3. Trains Temporal GraphSAGE
+4. Trains TGN (unless `--skip-tgn`)
+5. Learns ensemble weights and optional probability calibration
+6. Saves models and reports under `artifacts/`
+
+## Run the API
+
+Start locally:
+
+```bash
+python -m deployment.app
+```
+
+The app loads:
+- preprocessors from `artifacts/processed/preprocessors.pkl`
+- model assets from `artifacts/models/`
+
+If required artifact files are missing, train first with `python -m training.train`.
+
+## API Reference
+
+### `GET /health`
+Returns service status.
+
+### `GET /model-info`
+Returns available models, ensemble weights, risk thresholds, and feature summary.
+
+### `POST /predict`
+Request body:
+
+```json
+{
+  "sender_id": "ACC_0001",
+  "receiver_id": "ACC_0002",
+  "transaction_amount": 9500,
+  "timestamp": "2025-03-12T10:15:00",
+  "transaction_type": "transfer"
+}
+```
+
+Required fields:
+- `sender_id`
+- `receiver_id`
+- `transaction_amount`
+- `timestamp` (ISO-8601 compatible)
+- `transaction_type` (must match known classes)
+
+Response shape:
+
 ```json
 {
   "baseline_probability": 0.23,
@@ -122,76 +245,104 @@ curl -X POST http://127.0.0.1:5000/predict \
   "fraud_probability": 0.35,
   "risk_classification": "low",
   "model_weights": {
-    "baseline": 0.2,
-    "graphsage": 0.3,
-    "tgn": 0.5
+    "baseline": 0.4239,
+    "graphsage": 0.4834,
+    "tgn": 0.0926
   }
 }
 ```
 
-## Dataset
+Risk classification thresholds (from `deployment/app.py`):
+- `critical`: $p \ge 0.85$
+- `high`: $0.70 \le p < 0.85$
+- `medium`: $0.45 \le p < 0.70$
+- `low`: $0.25 \le p < 0.45$
+- `minimal`: $p < 0.25$
 
-The training pipeline generates synthetic AML data with:
-- Normal transactions (transfer, payment, deposit, withdrawal, cash_out)
-- Suspicious patterns (rapid chains, layered movement, structuring)
+## Model Performance
 
-**Features:**
-- `sender_id`, `receiver_id` - Account identifiers
-- `transaction_amount` - Transaction value
-- `timestamp` - Transaction time
-- `transaction_type` - Transaction category
-- `label` - Fraud indicator (0/1)
+Latest summary from `artifacts/reports/summary.json`:
 
-## Training Outputs
+| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.9500 | 0.7165 | 0.9653 | 0.8225 | 0.9896 |
+| Random Forest | 0.9692 | 0.9084 | 0.8264 | 0.8655 | 0.9941 |
+| Temporal GraphSAGE | 0.9742 | 0.9124 | 0.8681 | 0.8897 | 0.9950 |
+| TGN | 0.9542 | 0.7908 | 0.8403 | 0.8148 | 0.9754 |
+| Ensemble | 0.9783 | 0.8933 | 0.9306 | 0.9116 | 0.9945 |
 
-After training, the project generates:
+Learned ensemble weights:
+- baseline: 0.42396
+- graphsage: 0.48343
+- tgn: 0.09261
 
-```
-artifacts/
-├── models/
-│   ├── logistic_regression.joblib
-│   ├── random_forest.joblib
-│   ├── temporal_graphsage.pt
-│   ├── tgn_model.pt
-│   ├── ensemble_weights.pt
-│   ├── calibrator.pkl
-│   └── optimal_weights.json
-├── processed/
-│   ├── train_transactions.csv
-│   ├── test_transactions.csv
-│   ├── node_features.csv
-│   └── feature_metadata.json
-└── reports/
-    ├── model_comparison.csv
-    ├── project_report.md
-    └── summary.json
+## Testing
+
+Run all tests:
+
+```bash
+python -m pytest tests -v
 ```
 
-## Expected Performance
+Run only integration tests:
 
-| Model | F1 Score | ROC-AUC |
-|-------|----------|---------|
-| Logistic Regression | ~0.74 | ~0.98 |
-| Random Forest | ~0.81 | ~0.99 |
-| GraphSAGE | ~0.87 | ~0.99 |
-| **TGN** | ~0.90 | ~0.99 |
-| **Ensemble** | ~0.92 | ~0.99 |
+```bash
+python -m pytest tests/test_integration.py -v
+```
 
-## Technical Highlights
+Run only TGN tests:
 
-1. **No External GNN Libraries**: Pure PyTorch implementation for portability
-2. **Focal Loss**: Addresses class imbalance in fraud detection
-3. **Isotonic Calibration**: Ensures well-calibrated probability outputs
-4. **Modular Design**: Easy to extend with new features or models
-5. **Comprehensive Testing**: Unit and integration test coverage
+```bash
+python -m pytest tests/test_tgn.py -v
+```
 
-## Assumptions & Limitations
+## Artifacts Generated
 
-- Uses synthetic data (real AML data is typically confidential)
-- Graph context limited by available transaction history
-- Near-threshold detection assumes standard reporting thresholds
+After training, check these paths:
+
+- `artifacts/models/`
+  - `logistic_regression.joblib`
+  - `random_forest.joblib`
+  - `temporal_graphsage.pt`
+  - `tgn_model.pt`
+  - `optimal_weights.json`
+  - `calibrator.pkl`
+  - `gnn_node_embeddings.pkl`
+- `artifacts/processed/`
+  - `train_transactions.csv`
+  - `test_transactions.csv`
+  - `node_features.csv`
+  - `feature_metadata.json`
+  - `preprocessors.pkl`
+- `artifacts/reports/`
+  - `model_comparison.csv`
+  - `project_report.md`
+  - `summary.json`
+
+## Deployment Notes
+
+The repository also includes:
+- [SETUP.md](SETUP.md) for step-by-step setup details
+- [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md) for cloud deployment notes
+- [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for architecture and rationale
+
+## Troubleshooting
+
+- `FileNotFoundError` for model/preprocessor files:
+  - Run `python -m training.train` first.
+- `Unsupported transaction_type` from `/predict`:
+  - Use one of the transaction types learned during preprocessing.
+- Import/module path errors:
+  - Run commands from the repository root.
+- Slow training on CPU:
+  - Use `--skip-tgn` for a faster iteration loop.
+
+## Limitations and Assumptions
+
+- The project uses synthetic data, not confidential real bank data.
+- Performance can vary by random seed and data generation pattern.
+- Graph context depends on available transaction history.
 
 ## License
 
-This project is for educational and demonstration purposes.
-
+This project is intended for educational and demonstration use.
