@@ -1,0 +1,9 @@
+pandas
+numpy
+scikit-learn
+torch
+flask
+flask-cors
+networkx
+joblib
+pytest

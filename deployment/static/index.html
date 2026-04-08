@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AML Detection System - Temporal Graph Networks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --bg-card-hover: #22222e;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --critical: #dc2626;
+            --border: #2d2d3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        .info-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .info-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--accent-primary);
+        }
+
+        .info-card ul {
+            list-style: none;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .info-card li {
+            padding: 0.4rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .info-card li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .input-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .scenarios {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .scenario-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .scenario-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-primary);
+        }
+
+        .scenario-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--text-primary);
+        }
+
+        .scenario-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .risk-critical {
+            background: rgba(220, 38, 38, 0.2);
+            color: var(--critical);
+            border: 1px solid var(--critical);
+        }
+
+        .risk-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .risk-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .risk-minimal {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-success);
+            border: 1px solid var(--accent-success);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .model-weights {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .model-weights h4 {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .weight-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .weight-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            margin: 0 1rem;
+            overflow: hidden;
+        }
+
+        .weight-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+        }
+
+        .explanation {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-primary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .explanation h4 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+
+        .explanation p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .tech-badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h1>Advanced AML Detection System</h1>
+                    <p class="subtitle">Powered by Temporal Graph Networks & Ensemble Learning</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="info-section">
+            <div class="info-card">
+                <h3><i class="fas fa-brain"></i> AI Models</h3>
+                <ul>
+                    <li><strong>TGN:</strong> Temporal Graph Network with Time2Vec</li>
+                    <li><strong>GraphSAGE:</strong> Message-passing GNN</li>
+                    <li><strong>Random Forest:</strong> Ensemble baseline</li>
+                    <li><strong>Ensemble:</strong> Learned weight combination</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-chart-line"></i> Advanced Features</h3>
+                <ul>
+                    <li>PageRank & cycle detection</li>
+                    <li>Velocity & burst analysis</li>
+                    <li>Structuring pattern detection</li>
+                    <li>Temporal window aggregations</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-trophy"></i> Performance</h3>
+                <ul>
+                    <li><strong>Ensemble F1:</strong> ~0.92</li>
+                    <li><strong>TGN F1:</strong> ~0.82</li>
+                    <li><strong>ROC-AUC:</strong> ~0.99</li>
+                    <li>Isotonic calibration</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3><i class="fas fa-shield-alt"></i> Risk Levels</h3>
+                <ul>
+                    <li><strong>Critical:</strong> ≥ 0.85</li>
+                    <li><strong>High:</strong> 0.70 - 0.84</li>
+                    <li><strong>Medium:</strong> 0.45 - 0.69</li>
+                    <li><strong>Low:</strong> 0.25 - 0.44</li>
+                    <li><strong>Minimal:</strong> &lt; 0.25</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <h2>Transaction Analysis</h2>
+                </div>
+
+                <div class="scenarios">
+                    <div class="scenario-btn" onclick="loadScenario('normal')">
+                        <div class="scenario-title">✓ Normal Transaction</div>
+                        <div class="scenario-desc">Regular business payment</div>
+                    </div>
+                    <div class="scenario-btn" onclick="loadScenario('suspicious')">
+                        <div class="scenario-title">⚠ Suspicious Activity</div>
+                        <div class="scenario-desc">Large amount just below threshold</div>
+                    </div>
+                    <div class="scenario-btn" onclick="loadScenario('highRisk')">
+                        <div class="scenario-title">🚨 High Risk Pattern</div>
+                        <div class="scenario-desc">Structuring with rapid succession</div>
+                    </div>
+                </div>
+
+                <form id="fraudForm">
+                    <div class="form-group">
+                        <label for="sender_id">Sender Account ID</label>
+                        <input type="text" id="sender_id" required placeholder="e.g., ACC_0001">
+                        <div class="input-hint">Account initiating transaction</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="receiver_id">Receiver Account ID</label>
+                        <input type="text" id="receiver_id" required placeholder="e.g., ACC_0002">
+                        <div class="input-hint">Account receiving funds</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transaction_amount">Transaction Amount ($)</label>
+                        <input type="number" id="transaction_amount" step="0.01" required placeholder="5000.00">
+                        <div class="input-hint">Amount in USD (threshold at $10,000)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="timestamp">Transaction Timestamp</label>
+                        <input type="datetime-local" id="timestamp" required>
+                        <div class="input-hint">Affects temporal features</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="transaction_type">Transaction Type</label>
+                        <select id="transaction_type" required>
+                            <option value="transfer">Transfer</option>
+                            <option value="payment">Payment</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                            <option value="cash_out">Cash Out</option>
+                        </select>
+                        <div class="input-hint">Different risk profiles</div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-search"></i> Analyze
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="resetForm()">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h2>Analysis Results</h2>
+                </div>
+
+                <div id="resultsContainer" class="hidden">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <div class="metric-label">Overall Fraud Risk</div>
+                        <div class="metric-value" id="overallRisk">--</div>
+                        <div class="risk-badge" id="riskBadge">Analyzing...</div>
+                    </div>
+
+                    <div class="result-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Baseline</div>
+                            <div class="metric-value" id="baselineProb">--</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="baselineBar" 
+                                     style="background: linear-gradient(90deg, #f59e0b, #ef4444);"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">GraphSAGE</div>
+                            <div class="metric-value" id="graphsageProb">--</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="graphsageBar" 
+                                     style="background: linear-gradient(90deg, #8b5cf6, #6366f1);"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">TGN</div>
+                            <div class="metric-value" id="tgnProb">--</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="tgnBar" 
+                                     style="background: linear-gradient(90deg, #6366f1, #10b981);"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-label">Ensemble</div>
+                            <div class="metric-value" id="ensembleProb">--</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="ensembleBar" 
+                                     style="background: linear-gradient(90deg, #10b981, #6366f1);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-weights">
+                        <h4><i class="fas fa-balance-scale"></i> Ensemble Weights</h4>
+                        <div class="weight-item">
+                            <span>Baseline</span>
+                            <div class="weight-bar">
+                                <div class="weight-fill" id="weightBaseline"></div>
+                            </div>
+                            <span id="weightBaselineText">--</span>
+                        </div>
+                        <div class="weight-item">
+                            <span>GraphSAGE</span>
+                            <div class="weight-bar">
+                                <div class="weight-fill" id="weightGraphSAGE"></div>
+                            </div>
+                            <span id="weightGraphSAGEText">--</span>
+                        </div>
+                        <div class="weight-item">
+                            <span>TGN</span>
+                            <div class="weight-bar">
+                                <div class="weight-fill" id="weightTGN"></div>
+                            </div>
+                            <span id="weightTGNText">--</span>
+                        </div>
+                    </div>
+
+                    <div class="explanation">
+                        <h4><i class="fas fa-lightbulb"></i> What This Means</h4>
+                        <p id="explanationText">Submit a transaction to see analysis...</p>
+                    </div>
+                </div>
+
+                <div id="loadingContainer" class="hidden" style="text-align: center; padding: 3rem;">
+                    <div class="loading"></div>
+                    <p style="margin-top: 1rem; color: var(--text-secondary);">Analyzing...</p>
+                </div>
+
+                <div id="emptyState" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fas fa-chart-pie" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>No results yet. Enter a transaction to analyze.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="explanation">
+            <h4><i class="fas fa-code"></i> Technology Stack</h4>
+            <p><strong>Models:</strong> TGN with Time2Vec, GraphSAGE, Random Forest, Learned ensemble.</p>
+            <p><strong>Features:</strong> 31 node features (PageRank, velocity, structuring, temporal windows).</p>
+            <p><strong>Training:</strong> Focal loss, early stopping, gradient clipping.</p>
+            
+            <div class="tech-stack">
+                <span class="tech-badge">Python</span>
+                <span class="tech-badge">PyTorch</span>
+                <span class="tech-badge">Scikit-learn</span>
+                <span class="tech-badge">Flask</span>
+                <span class="tech-badge">Pandas</span>
+                <span class="tech-badge">NumPy</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = {
+            normal: {
+                sender_id: 'ACC_0123',
+                receiver_id: 'ACC_0456',
+                transaction_amount: 2500.00,
+                timestamp: new Date().toISOString().slice(0, 16),
+                transaction_type: 'payment'
+            },
+            suspicious: {
+                sender_id: 'ACC_0789',
+                receiver_id: 'ACC_0321',
+                transaction_amount: 9850.00,
+                timestamp: new Date(Date.now() - 3600000).toISOString().slice(0, 16),
+                transaction_type: 'transfer'
+            },
+            highRisk: {
+                sender_id: 'ACC_0111',
+                receiver_id: 'ACC_0222',
+                transaction_amount: 9500.00,
+                timestamp: new Date(Date.now() - 900000).toISOString().slice(0, 16),
+                transaction_type: 'cash_out'
+            }
+        };
+
+        function loadScenario(type) {
+            const scenario = scenarios[type];
+            document.getElementById('sender_id').value = scenario.sender_id;
+            document.getElementById('receiver_id').value = scenario.receiver_id;
+            document.getElementById('transaction_amount').value = scenario.transaction_amount;
+            document.getElementById('timestamp').value = scenario.timestamp;
+            document.getElementById('transaction_type').value = scenario.transaction_type;
+        }
+
+        function resetForm() {
+            document.getElementById('fraudForm').reset();
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+
+        function formatProbability(prob) {
+            return (prob * 100).toFixed(1) + '%';
+        }
+
+        function updateProgressBar(elementId, probability) {
+            document.getElementById(elementId).style.width = (probability * 100) + '%';
+        }
+
+        function getRiskClass(riskLevel) {
+            return 'risk-' + riskLevel;
+        }
+
+        function getExplanation(results) {
+            const prob = results.ensemble_probability;
+            const risk = results.risk_classification;
+            
+            let explanation = '';
+            
+            if (risk === 'critical' || risk === 'high') {
+                explanation = `<strong>⚠️ High Risk Detected!</strong> ${formatProbability(prob)} fraud probability. `;
+                explanation += 'Recommend manual review and investigation.';
+            } else if (risk === 'medium') {
+                explanation = `<strong>⚡ Moderate Risk.</strong> ${formatProbability(prob)} fraud probability. `;
+                explanation += 'Consider additional verification.';
+            } else {
+                explanation = `<strong>✓ Low Risk.</strong> ${formatProbability(prob)} fraud probability. `;
+                explanation += 'Appears normal, continue monitoring.';
+            }
+            
+            return explanation;
+        }
+
+        document.getElementById('fraudForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('loadingContainer').classList.remove('hidden');
+            
+            const formData = {
+                sender_id: document.getElementById('sender_id').value,
+                receiver_id: document.getElementById('receiver_id').value,
+                transaction_amount: parseFloat(document.getElementById('transaction_amount').value),
+                timestamp: document.getElementById('timestamp').value.replace('T', ' ') + ':00',
+                transaction_type: document.getElementById('transaction_type').value
+            };
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) throw new Error('Prediction failed');
+                
+                const results = await response.json();
+                
+                document.getElementById('loadingContainer').classList.add('hidden');
+                document.getElementById('resultsContainer').classList.remove('hidden');
+                
+                document.getElementById('overallRisk').textContent = formatProbability(results.ensemble_probability);
+                const badge = document.getElementById('riskBadge');
+                badge.textContent = results.risk_classification.toUpperCase();
+                badge.className = 'risk-badge ' + getRiskClass(results.risk_classification);
+                
+                document.getElementById('baselineProb').textContent = formatProbability(results.baseline_probability);
+                document.getElementById('graphsageProb').textContent = formatProbability(results.graphsage_probability);
+                document.getElementById('tgnProb').textContent = formatProbability(results.tgn_probability);
+                document.getElementById('ensembleProb').textContent = formatProbability(results.ensemble_probability);
+                
+                updateProgressBar('baselineBar', results.baseline_probability);
+                updateProgressBar('graphsageBar', results.graphsage_probability);
+                updateProgressBar('tgnBar', results.tgn_probability);
+                updateProgressBar('ensembleBar', results.ensemble_probability);
+                
+                const weights = results.model_weights;
+                document.getElementById('weightBaseline').style.width = (weights.baseline * 100) + '%';
+                document.getElementById('weightGraphSAGE').style.width = (weights.graphsage * 100) + '%';
+                document.getElementById('weightTGN').style.width = (weights.tgn * 100) + '%';
+                
+                document.getElementById('weightBaselineText').textContent = (weights.baseline * 100).toFixed(1) + '%';
+                document.getElementById('weightGraphSAGEText').textContent = (weights.graphsage * 100).toFixed(1) + '%';
+                document.getElementById('weightTGNText').textContent = (weights.tgn * 100).toFixed(1) + '%';
+                
+                document.getElementById('explanationText').innerHTML = getExplanation(results);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+                document.getElementById('loadingContainer').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('timestamp').value = new Date().toISOString().slice(0, 16);
+    </script>
+</body>
+</html>
