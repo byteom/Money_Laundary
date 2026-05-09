@@ -225,6 +225,182 @@ class TestDeployment:
             assert response.status_code == 200
             assert response.json["status"] == "ok"
 
+    def test_predict_response_contains_explainability_contract(self):
+        """Ensure /predict keeps legacy keys and exposes additive explainability payload."""
+        from deployment.app import app
+
+        payload = {
+            "sender_id": "ACC_0001",
+            "receiver_id": "ACC_0002",
+            "transaction_amount": 1250.0,
+            "timestamp": "2025-02-14T10:25:00Z",
+            "transaction_type": "transfer",
+        }
+
+        with app.test_client() as client:
+            response = client.post("/predict", json=payload)
+
+        assert response.status_code == 200
+        body = response.get_json()
+
+        # Backward compatibility
+        for key in [
+            "baseline_probability",
+            "graphsage_probability",
+            "tgn_probability",
+            "logistic_probability",
+            "ensemble_probability",
+            "fraud_probability",
+            "risk_classification",
+            "model_weights",
+            "calibration_applied",
+            "calibrator_info",
+            "inference_warnings",
+            "context_applied",
+            "context_summary",
+        ]:
+            assert key in body
+
+    def test_predict_accepts_unseen_accounts(self):
+        """Unseen account IDs should use safe fallbacks instead of crashing on missing history columns."""
+        import deployment.app as app_module
+
+        app_module.ASSETS = None
+        payload = {
+            "sender_id": "ACC_UNSEEN_SENDER",
+            "receiver_id": "ACC_UNSEEN_RECEIVER",
+            "transaction_amount": 875.0,
+            "timestamp": "2025-02-14T10:25:00Z",
+            "transaction_type": "transfer",
+        }
+
+        with app_module.app.test_client() as client:
+            response = client.post("/predict", json=payload)
+
+        assert response.status_code == 200
+        body = response.get_json()
+        assert body["history_updated"] is True
+        assert any("unseen in training accounts" in warning for warning in body["inference_warnings"])
+
+    def test_batch_predict_returns_ordered_results(self):
+        from deployment.app import app
+
+        payload = {
+            "cases": [
+                {
+                    "case_id": "case_a",
+                    "scenario": "Low risk payment",
+                    "payload": {
+                        "sender_id": "ACC_0001",
+                        "receiver_id": "ACC_0002",
+                        "transaction_amount": 120.0,
+                        "timestamp": "2025-02-14T10:25:00Z",
+                        "transaction_type": "payment",
+                    },
+                },
+                {
+                    "case_id": "case_b",
+                    "scenario": "Higher risk transfer",
+                    "payload": {
+                        "sender_id": "ACC_0003",
+                        "receiver_id": "ACC_0004",
+                        "transaction_amount": 9850.0,
+                        "timestamp": "2025-02-14T10:35:00Z",
+                        "transaction_type": "transfer",
+                    },
+                },
+            ]
+        }
+
+        with app.test_client() as client:
+            response = client.post("/batch-predict", json=payload)
+
+        assert response.status_code == 200
+        body = response.get_json()
+        assert body["batch_mode"] is True
+        assert body["summary"]["cases_requested"] == 2
+        assert len(body["results"]) == 2
+        assert body["results"][0]["case_id"] == "case_a"
+        assert body["results"][1]["case_id"] == "case_b"
+        assert body["results"][0]["status"] == "ok"
+
+    def test_predict_context_accepts_recent_history(self):
+        from deployment.app import app
+
+        payload = {
+            "transaction": {
+                "sender_id": "ACC_0100",
+                "receiver_id": "ACC_0200",
+                "transaction_amount": 9500.0,
+                "timestamp": "2025-02-14T10:25:00Z",
+                "transaction_type": "cash_out",
+            },
+            "recent_transactions": [
+                {
+                    "sender_id": "ACC_0100",
+                    "receiver_id": "ACC_0200",
+                    "transaction_amount": 4900.0,
+                    "timestamp": "2025-02-14T09:25:00Z",
+                    "transaction_type": "cash_out",
+                },
+                {
+                    "sender_id": "ACC_0100",
+                    "receiver_id": "ACC_0200",
+                    "transaction_amount": 4950.0,
+                    "timestamp": "2025-02-14T09:45:00Z",
+                    "transaction_type": "cash_out",
+                },
+            ],
+        }
+
+        with app.test_client() as client:
+            response = client.post("/predict-context", json=payload)
+
+        assert response.status_code == 200
+        body = response.get_json()
+        assert body["context_mode"] is True
+        assert body["context_applied"] is True
+        assert body["context_summary"]["recent_transactions"] == 2
+        assert body["history_updated"] is False
+
+        # Additive explainability
+        assert "explainability" in body
+        explainability = body["explainability"]
+        for key in ["summary", "confidence", "model_contributions", "top_factors", "decision_steps", "inputs"]:
+            assert key in explainability
+
+        assert 0.0 <= float(explainability["confidence"]["score"]) <= 1.0
+        assert len(explainability["top_factors"]) > 0
+        assert len(explainability["decision_steps"]) > 0
+
+    def test_predict_simulate_only_is_stateless(self):
+        """simulate_only should keep predictions stable by not appending runtime history."""
+        import deployment.app as app_module
+
+        app_module.ASSETS = None
+        payload = {
+            "sender_id": "ACC_0123",
+            "receiver_id": "ACC_0456",
+            "transaction_amount": 500.0,
+            "timestamp": "2025-04-14T10:00:00Z",
+            "transaction_type": "withdrawal",
+            "simulate_only": True,
+        }
+
+        with app_module.app.test_client() as client:
+            first = client.post("/predict", json=payload)
+            second = client.post("/predict", json=payload)
+
+        assert first.status_code == 200
+        assert second.status_code == 200
+
+        first_body = first.get_json()
+        second_body = second.get_json()
+
+        assert first_body["history_updated"] is False
+        assert second_body["history_updated"] is False
+        assert first_body["ensemble_probability"] == second_body["ensemble_probability"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

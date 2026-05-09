@@ -1,0 +1,122 @@
+{
+  "cases_attempted": 120,
+  "cases_successful": 120,
+  "errors": [],
+  "unique_ensemble_count": 104,
+  "unique_ensemble_values": [
+    0.0,
+    0.0013,
+    0.0015,
+    0.0017,
+    0.0028,
+    0.0034,
+    0.0061,
+    0.0062,
+    0.0073,
+    0.0076,
+    0.0077,
+    0.0079,
+    0.0084,
+    0.0095,
+    0.0106,
+    0.0111,
+    0.0112,
+    0.0126,
+    0.0137,
+    0.0138,
+    0.014,
+    0.0141,
+    0.0143,
+    0.0164,
+    0.0171,
+    0.0183,
+    0.0229,
+    0.0281,
+    0.0314,
+    0.0462,
+    0.0646,
+    0.0874,
+    0.4482,
+    0.4497,
+    0.4512,
+    0.4514,
+    0.4516,
+    0.4529,
+    0.4546,
+    0.4561,
+    0.4573,
+    0.4575,
+    0.4576,
+    0.4578,
+    0.4589,
+    0.4595,
+    0.4619,
+    0.4638,
+    0.464,
+    0.4645
+  ],
+  "ensemble_std": 0.257595,
+  "risk_class_counts": {
+    "low": 2,
+    "medium": 80,
+    "minimal": 38
+  },
+  "explainability_coverage": 1.0,
+  "per_category": {
+    "amount": {
+      "count": 12,
+      "unique": 12,
+      "std": 0.270972,
+      "mean": 0.405867
+    },
+    "boundary": {
+      "count": 10,
+      "unique": 6,
+      "std": 0.006654,
+      "mean": 0.51027
+    },
+    "burst": {
+      "count": 24,
+      "unique": 21,
+      "std": 0.138744,
+      "mean": 0.612442
+    },
+    "day_of_week": {
+      "count": 7,
+      "unique": 7,
+      "std": 0.225366,
+      "mean": 0.367357
+    },
+    "hour": {
+      "count": 8,
+      "unique": 8,
+      "std": 0.163087,
+      "mean": 0.433988
+    },
+    "known_pair": {
+      "count": 8,
+      "unique": 8,
+      "std": 0.262444,
+      "mean": 0.224188
+    },
+    "matrix": {
+      "count": 39,
+      "unique": 34,
+      "std": 0.224618,
+      "mean": 0.218608
+    },
+    "type": {
+      "count": 5,
+      "unique": 4,
+      "std": 0.033275,
+      "mean": 0.6029
+    },
+    "unknown": {
+      "count": 7,
+      "unique": 7,
+      "std": 0.227674,
+      "mean": 0.208271
+    }
+  },
+  "csv_path": "artifacts\\reports\\implementation_120_probe_results.csv"
+}

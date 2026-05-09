@@ -1,0 +1,57 @@
+{
+  "cases_attempted": 50,
+  "cases_successful": 50,
+  "errors": [],
+  "unique_ensemble_count": 4,
+  "unique_ensemble_values": [
+    0.0093,
+    0.0119,
+    0.8333,
+    0.902
+  ],
+  "ensemble_std": 0.37421,
+  "risk_class_counts": {
+    "critical": 2,
+    "high": 12,
+    "minimal": 36
+  },
+  "per_category": {
+    "amount": {
+      "count": 12,
+      "unique": 3,
+      "std": 0.405872,
+      "mean": 0.353067
+    },
+    "boundary": {
+      "count": 10,
+      "unique": 2,
+      "std": 0.412,
+      "mean": 0.4213
+    },
+    "hour": {
+      "count": 8,
+      "unique": 1,
+      "std": 0.0,
+      "mean": 0.0093
+    },
+    "known_pair": {
+      "count": 8,
+      "unique": 3,
+      "std": 0.385613,
+      "mean": 0.2341
+    },
+    "type": {
+      "count": 5,
+      "unique": 2,
+      "std": 0.00104,
+      "mean": 0.00982
+    },
+    "unknown": {
+      "count": 7,
+      "unique": 3,
+      "std": 0.371307,
+      "mean": 0.246214
+    }
+  },
+  "csv_path": "artifacts\\reports\\before_fix_probe_results.csv"
+}

@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import numpy as np
 import pandas as pd
 import torch
+from sklearn.model_selection import train_test_split
 
 from models.baseline import train_baselines
 from models.gnn import train_gnn, TemporalGraphSAGE
@@ -229,22 +230,30 @@ def main() -> None:
     else:
         tgn_probs = graphsage_probs  # Fallback
     
-    # Train ensemble
+    # Validation split for ensemble fitting and calibration.
+    val_indices, holdout_indices = train_test_split(
+        np.arange(len(prepared.y_test)),
+        test_size=0.5,
+        random_state=42,
+        stratify=prepared.y_test,
+    )
+
+    # Train ensemble on validation predictions only.
     ensemble, optimal_weights, calibrator = train_ensemble(
-        baseline_probs,
-        graphsage_probs,
-        tgn_probs,
-        prepared.y_test,
+        baseline_probs[val_indices],
+        graphsage_probs[val_indices],
+        tgn_probs[val_indices],
+        prepared.y_test[val_indices],
         models_dir,
     )
     print(f"  - Optimal weights: {optimal_weights}")
     
-    # Evaluate ensemble
+    # Evaluate ensemble on held-out test split only.
     ensemble_result = evaluate_ensemble(
-        baseline_probs,
-        graphsage_probs,
-        tgn_probs,
-        prepared.y_test,
+        baseline_probs[holdout_indices],
+        graphsage_probs[holdout_indices],
+        tgn_probs[holdout_indices],
+        prepared.y_test[holdout_indices],
         optimal_weights,
         calibrator,
     )

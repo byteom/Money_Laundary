@@ -14,22 +14,22 @@ temporal graph neural networks with advanced feature engineering.
   - Recall: 0.8264
 
 ### Graph Neural Network (GraphSAGE)
-- F1 Score: 0.8897
-- ROC-AUC: 0.9950
-- Precision: 0.9124
-- Recall: 0.8681
+- F1 Score: 0.8970
+- ROC-AUC: 0.9953
+- Precision: 0.8599
+- Recall: 0.9375
 
 ### Temporal Graph Network (TGN) - Advanced
-- F1 Score: 0.8148
-- ROC-AUC: 0.9754
-- Precision: 0.7908
-- Recall: 0.8403
+- F1 Score: 0.7946
+- ROC-AUC: 0.9769
+- Precision: 0.7712
+- Recall: 0.8194
 
 ### Ensemble Model (Best)
-- F1 Score: 0.9116
-- ROC-AUC: 0.9945
-- Precision: 0.8933
-- Recall: 0.9306
+- F1 Score: 0.9342
+- ROC-AUC: 0.9980
+- Precision: 0.8875
+- Recall: 0.9861
 
 ## Advanced Features Implemented
 

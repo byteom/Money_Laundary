@@ -92,7 +92,10 @@ def train_gnn(
         hidden_dim=64,
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
-    criterion = nn.BCEWithLogitsLoss()
+    negative_count = float((train_batch.labels == 0).sum().item())
+    positive_count = float((train_batch.labels == 1).sum().item())
+    pos_weight_value = negative_count / max(positive_count, 1.0)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight_value, dtype=torch.float32))
 
     best_state = None
     best_f1 = -1.0
